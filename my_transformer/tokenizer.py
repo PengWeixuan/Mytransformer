@@ -75,7 +75,7 @@ def build_array_fra(lines:list[str], tokenizer:Tokenizer, num_steps:int):
     array = torch.tensor([truncate_pad(
         l, num_steps, tokenizer.encode("<|pad|>")) for l in lines])
     valid_len = (array != tokenizer.encode("<|pad|>")[0]).type(torch.int32).sum(1)
-    return array, valid_len
+    return array, valid_len #Tensor(Tensor(int)),Tensor[int]
 
 def load_data_fra(model_path:str,batch_size, num_steps, num_examples=600):
     #return an iterator
@@ -93,20 +93,21 @@ def load_data_fra(model_path:str,batch_size, num_steps, num_examples=600):
         dataset = data.TensorDataset(*data_arrays)
         return data.DataLoader(dataset, batch_size, shuffle=is_train)
     data_iter = load_array(data_arrays, batch_size)
-    return data_iter, tokenizer
+    return data_iter, tokenizer #each data_iter has shape of (batch_size,num_steps)
 
 
 # model_path="/home/pengweixuan/Documents/mylearning/Mytransformer/non_code_files/tokenizer.model"
 # raw_text=read_data_fra()
 # text1 = preprocess_fra(raw_text)
-# print(text[:80])
+# print(text1[:80])
 # source, target = tokenize_fra(text1)
 # print(source[1000:1006], target[1000:1006])
 # t=Tokenizer(model_path)
 # a=truncate_pad(t.encode(source[0]),10,t.encode("<|pad|>"))
 # print(a)
 # train_iter, tokenizer = load_data_fra(model_path,batch_size=2, num_steps=8)
-# for X, X_valid_len, Y, Y_valid_len in train_iter:
+# for batch in train_iter:
+#     X, X_valid_len, Y, Y_valid_len = [x for x in batch]
 #     print( X.type(torch.int32))
 #     print(X_valid_len)
 #     print( Y.type(torch.int32))
