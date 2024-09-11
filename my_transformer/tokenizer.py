@@ -11,16 +11,17 @@ from tiktoken.load import load_tiktoken_bpe
 from torch.utils import data
 
 
-def read_data_fra()->str:
-    with open(__DATA_PATH__,'r',encoding='utf-8') as f:
+def read_data_fra(data_path)->str:
+    with open(data_path,'r',encoding='utf-8') as f:
         return f.read()
 def preprocess_fra(text:str)->str:
+    # Delete extra space
     text = text.replace('\u202f', ' ').replace('\xa0', ' ')
     # Insert Spaces between words and ',.!?'
     text = re.sub(r'(\w)([,.!?])', r'\1 \2', text)
     text = re.sub(r'([,.!?])(\w)', r'\1 \2', text)
     return text
-def tokenize_fra(text:str, num_examples:int=None)->(str,str):
+def split_line(text:str, num_examples:int)->(list[str], list[str]):
     source, target = [], []
     for i, line in enumerate(text.split('\n')):
         if num_examples and i > num_examples:
@@ -71,17 +72,19 @@ def truncate_pad(line:list[int], num_steps:int, padding_token:list[int])->list[i
     return line + padding_token * (num_steps - len(line))  # pad
 
 def build_array_fra(lines:list[str], tokenizer:Tokenizer, num_steps:int):
+    #Tokenize and build array
+    #return Tensor(Tensor(int)),Tensor[int]
     lines = [tokenizer.encode(l,bos=False,eos=True) for l in lines]
     array = torch.tensor([truncate_pad(
         l, num_steps, tokenizer.encode("<|pad|>")) for l in lines])
     valid_len = (array != tokenizer.encode("<|pad|>")[0]).type(torch.int32).sum(1)
-    return array, valid_len #Tensor(Tensor(int)),Tensor[int]
+    return array, valid_len
 
-def load_data_fra(model_path:str,batch_size, num_steps, num_examples=600):
+def load_data_fra(data_path:str,model_path:str,batch_size, num_steps, num_examples=600):
     #return an iterator
     assert os.path.isfile(model_path), model_path
-    text = preprocess_fra(read_data_fra())#sentence
-    source, target = tokenize_fra(text, num_examples)#token
+    text = preprocess_fra(read_data_fra(data_path))# all text in one string
+    source, target = split_line(text, num_examples)#eng, fra sentences
     tokenizer = Tokenizer(model_path)
 
     src_array, src_valid_len = build_array_fra(source, tokenizer, num_steps)#Tensor(Tensor(int)),Tensor[int]
@@ -93,7 +96,7 @@ def load_data_fra(model_path:str,batch_size, num_steps, num_examples=600):
         dataset = data.TensorDataset(*data_arrays)
         return data.DataLoader(dataset, batch_size, shuffle=is_train)
     data_iter = load_array(data_arrays, batch_size)
-    return data_iter, tokenizer #each data_iter has shape of (batch_size,num_steps)
+    return data_iter, tokenizer #each data_iter has shape of ((batch_size,num_steps),(batch_size)) * 2
 
 
 # model_path="/home/pengweixuan/Documents/mylearning/Mytransformer/non_code_files/tokenizer.model"
