@@ -1,6 +1,3 @@
-#Download from https://www.manythings.org/anki/fra-eng.zip
-__DATA_PATH__="../non_code_files/fra.txt"
-
 import os
 import re
 from pathlib import Path
@@ -83,6 +80,7 @@ def build_array_fra(lines:list[str], tokenizer:Tokenizer, num_steps:int):
 def load_data_fra(data_path:str,model_path:str,batch_size, num_steps, num_examples=600):
     #return an iterator
     assert os.path.isfile(model_path), model_path
+    assert os.path.isfile(data_path), data_path
     text = preprocess_fra(read_data_fra(data_path))# all text in one string
     source, target = split_line(text, num_examples)#eng, fra sentences
     tokenizer = Tokenizer(model_path)

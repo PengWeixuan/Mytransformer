@@ -11,13 +11,13 @@ from my_transformer.utils import masked_softmax
 
 @dataclass
 class ModelArgs:
-    num_hiddens: int = 512# or dim
-    enc_layers: int = 6
-    dec_layers: int = 6
+    num_hiddens: int = 32# or dim
+    enc_layers: int = 2
+    dec_layers: int = 2
     n_heads: int = 4
     vocab_size: int = 128003
     dropout:float=0.1
-    ffn_dim_multiplier=4
+    ffn_dim_multiplier=2
     bias:bool=True
 
 def positionalEncoding(X:torch.Tensor,num_hiddens,dropout):
@@ -176,21 +176,21 @@ class Transformer(nn.Module):
         enc_out=self.encoder(enc_X,enc_valid_len)
         return self.decoder(dec_X,enc_out,enc_valid_len)
 
-if __name__=="__main__":
-    # test
-    model_path="C:\\Users\\39936\\Downloads\\tokenizer.model"
-    tokenizer = Tokenizer(model_path)
-
-    args: ModelArgs=ModelArgs(vocab_size=tokenizer.n_words)
-
-    bsz,seqlen=2,10
-    enc_validlen=torch.tensor([3,2])
-    net=Transformer(args)
-    net.eval()
-    enc_X=torch.ones((bsz,seqlen), dtype=torch.long)
-    dec_X=torch.ones((bsz,3), dtype=torch.long)
-    a=net(enc_X,dec_X,enc_validlen)
-    print(a.shape)
-
-    b=predict(net,"Hello world.",tokenizer,10,enc_X.device)
-    print(b)
+# if __name__=="__main__":
+#     # test
+#     model_path="C:\\Users\\39936\\Downloads\\tokenizer.model"
+#     tokenizer = Tokenizer(model_path)
+#
+#     args: ModelArgs=ModelArgs(vocab_size=tokenizer.n_words)
+#
+#     bsz,seqlen=2,10
+#     enc_validlen=torch.tensor([3,2])
+#     net=Transformer(args)
+#     net.eval()
+#     enc_X=torch.ones((bsz,seqlen), dtype=torch.long)
+#     dec_X=torch.ones((bsz,3), dtype=torch.long)
+#     a=net(enc_X,dec_X,enc_validlen)
+#     print(a.shape)
+#
+#     b=predict(net,"Hello world.",tokenizer,10,enc_X.device)
+#     print(b)

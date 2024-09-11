@@ -32,7 +32,7 @@ def train(net, data_iter, lr, num_epochs, tokenizer:Tokenizer, device):
         if type(m) == nn.Linear:
             nn.init.xavier_uniform_(m.weight)
 
-    net.apply(xavier_init_weights)
+    #net.apply(xavier_init_weights)
     net.to(device)
     optimizer = torch.optim.Adam(net.parameters(), lr=lr)
     loss = MaskedSoftmaxCELoss()
@@ -46,9 +46,10 @@ def train(net, data_iter, lr, num_epochs, tokenizer:Tokenizer, device):
             bos = torch.tensor([tokenizer.bos_id] * Y.shape[0],
                           device=device).reshape(-1, 1)
             dec_input = torch.cat([bos, Y[:, :-1]], 1)  # teacher forcing
-            Y_hat, _ = net(X, dec_input, X_valid_len)
+            Y_hat = net(X, dec_input, X_valid_len)
             l = loss(Y_hat, Y, Y_valid_len)
             l.sum().backward()  #
+            train_loss=l.sum()
             grad_clipping(net, 1)
             num_tokens = Y_valid_len.sum()
             optimizer.step()
@@ -72,11 +73,10 @@ def predict(net, src_sentence:str,tokenizer:Tokenizer, num_steps,device):
     output_seq = []
     for _ in range(num_steps):
         Y = net.decoder(dec_X, enc_out,enc_valid_len)
-        # 使用具有预测最高可能性的词元，作为解码器在下一时间步的输入
+        a=Y.max(dim=2)
         dec_X = Y.argmax(dim=2)
         pred = dec_X.squeeze(dim=0).type(torch.int32).item()
 
-        # 一旦序列结束词元被预测，输出序列的生成就完成了
         if pred == tokenizer.eos_id:
             break
         output_seq.append(pred)

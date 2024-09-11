@@ -5,21 +5,25 @@ from my_transformer.tokenizer import Tokenizer
 from my_transformer.train_predict import predict
 
 
-def translate(english:str):
-    tokenizer_path = "C:\\Users\\39936\\Downloads\\tokenizer.model"
+def translate(english:list[str]):
+    tokenizer_path = "./non_code_files/tokenizer.model"
 
     device = torch.device(f'cuda:0')
     max_output_len=10
 
     tokenizer = Tokenizer(tokenizer_path)
-    args = ModelArgs(vocab_size=tokenizer.n_words)
+    args = ModelArgs(vocab_size=tokenizer.n_words,dropout=0.0)
     net = Transformer(args)
-    net.load_state_dict(torch.load('my_transformer.pth'),strict=True)
+    net.load_state_dict(torch.load('./non_code_files/my_transformer.pth',weights_only=True), strict=True)
+    net.to(device)
 
-    french=predict(net,english,tokenizer,max_output_len,device)
-    print(french)
+    french=[]
+    for eng in english:
+        french.append(predict(net,eng,tokenizer,max_output_len,device))
+    return french
 
 if __name__=="__main__":
-    engs = ['go .', "i lost .", 'he\'s calm .', 'i\'m home .']
-    for eng in engs:
-        translate(eng)
+    english = ['go .', "i lost .", 'he\'s calm .', 'i\'m home .',
+            'cheers !', 'go now .', 'i\'m a good guy .', 'i\'m a real man .']
+    french=translate(english)
+    print(french)
