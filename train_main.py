@@ -9,12 +9,13 @@ def trainMyTransformer(data_path:str):
     device = torch.device(f'cuda:0')
 
     batch_size = 64
-    max_seq_len = 10
     lr = 0.005
     num_epochs = 200
-    # The English-French pairs in the first "num_examples" line of fra.txt
-    # file are used as training samples.
-    num_examples=600
+    # The English-French pairs in the first "num_examples" lines of fra.txt
+    # file are used as training samples. Each sentence is no longer than
+    # "max_seq_len" tokens.
+    num_examples = 600 # There are 167130 lines in total in fra.txt.
+    max_seq_len = 10
 
     train_iter, src_vocab, tgt_vocab = load_data_fra(data_path,batch_size=batch_size,
                                                      num_steps=max_seq_len,num_examples=num_examples)

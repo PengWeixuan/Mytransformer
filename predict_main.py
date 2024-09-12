@@ -12,9 +12,9 @@ def translate(english:list[str],data_path:str):
 
     # Get the same src_vocab and tgt_vocab as train. Otherwise, the model will not work.
     _, src_vocab, tgt_vocab = load_data_fra(data_path, batch_size=64,num_steps=10, num_examples=600)
-    print(len(src_vocab),len(tgt_vocab))
-    args_enc = ModelArgs(vocab_size=len(src_vocab))
-    args_dec = ModelArgs(vocab_size=len(tgt_vocab))
+    #I don't know why I still had to manually set dropout to 0.0 even after I set net.eval().
+    args_enc = ModelArgs(vocab_size=len(src_vocab),dropout=0.0)
+    args_dec = ModelArgs(vocab_size=len(tgt_vocab),dropout=0.0)
 
     net = Transformer(args_enc, args_dec)
     net.load_state_dict(torch.load('./non_code_files/my_transformer.pth',weights_only=True), strict=True)
