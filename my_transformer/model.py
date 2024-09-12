@@ -178,8 +178,8 @@ class Transformer(nn.Module):
 
 # if __name__=="__main__":
 #     # test
-#     model_path="C:\\Users\\39936\\Downloads\\tokenizer.model"
-#     tokenizer = Tokenizer(model_path)
+#     tokenizer_path="../non_code_files/tokenizer.model"
+#     tokenizer = Tokenizer(tokenizer_path)
 #
 #     args: ModelArgs=ModelArgs(vocab_size=tokenizer.n_words)
 #

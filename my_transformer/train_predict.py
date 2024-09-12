@@ -73,7 +73,6 @@ def predict(net, src_sentence:str,tokenizer:Tokenizer, num_steps,device):
     output_seq = []
     for _ in range(num_steps):
         Y = net.decoder(dec_X, enc_out,enc_valid_len)
-        a=Y.max(dim=2)
         dec_X = Y.argmax(dim=2)
         pred = dec_X.squeeze(dim=0).type(torch.int32).item()
 

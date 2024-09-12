@@ -8,7 +8,8 @@ from tiktoken.load import load_tiktoken_bpe
 from torch.utils import data
 
 
-def read_data_fra(data_path)->str:
+def read_data_fra(data_path:str)->str:
+    assert os.path.isfile(data_path), data_path
     with open(data_path,'r',encoding='utf-8') as f:
         return f.read()
 def preprocess_fra(text:str)->str:
@@ -18,7 +19,7 @@ def preprocess_fra(text:str)->str:
     text = re.sub(r'(\w)([,.!?])', r'\1 \2', text)
     text = re.sub(r'([,.!?])(\w)', r'\1 \2', text)
     return text
-def split_line(text:str, num_examples:int)->(list[str], list[str]):
+def split_line(text:str, num_examples:int=None)->(list[str], list[str]):
     source, target = [], []
     for i, line in enumerate(text.split('\n')):
         if num_examples and i > num_examples:
@@ -51,6 +52,7 @@ class Tokenizer:
         self.n_words: int = self.model.n_vocab
         self.bos_id: int = self.special_tokens["<|begin_of_text|>"]
         self.eos_id: int = self.special_tokens["<|end_of_text|>"]
+        self.pad_id: int = self.special_tokens["<|pad|>"]
     def encode(self,s:str,bos:bool=False,eos:bool=False,
                allowed_special = "all",
                disallowed_special= "all")->list[int]:
@@ -63,27 +65,25 @@ class Tokenizer:
     def decode(self,t:list[int])->str:
         return self.model.decode(t)
 
-def truncate_pad(line:list[int], num_steps:int, padding_token:list[int])->list[int]:
+def truncate_pad(line:list[int], num_steps:int, padding_token:int)->list[int]:
     if len(line) > num_steps:
         return line[:num_steps]  # truncate
-    return line + padding_token * (num_steps - len(line))  # pad
+    return line + [padding_token] * (num_steps - len(line))  # pad
 
 def build_array_fra(lines:list[str], tokenizer:Tokenizer, num_steps:int):
     #Tokenize and build array
     #return Tensor(Tensor(int)),Tensor[int]
     lines = [tokenizer.encode(l,bos=False,eos=True) for l in lines]
     array = torch.tensor([truncate_pad(
-        l, num_steps, tokenizer.encode("<|pad|>")) for l in lines])
-    valid_len = (array != tokenizer.encode("<|pad|>")[0]).type(torch.int32).sum(1)
+        l, num_steps, tokenizer.pad_id) for l in lines])
+    valid_len = (array != tokenizer.pad_id).type(torch.int32).sum(1)
     return array, valid_len
 
-def load_data_fra(data_path:str,model_path:str,batch_size, num_steps, num_examples=600):
+def load_data_fra(data_path:str, tokenizer_path:str, batch_size, num_steps, num_examples=600):
     #return an iterator
-    assert os.path.isfile(model_path), model_path
-    assert os.path.isfile(data_path), data_path
     text = preprocess_fra(read_data_fra(data_path))# all text in one string
     source, target = split_line(text, num_examples)#eng, fra sentences
-    tokenizer = Tokenizer(model_path)
+    tokenizer = Tokenizer(tokenizer_path)
 
     src_array, src_valid_len = build_array_fra(source, tokenizer, num_steps)#Tensor(Tensor(int)),Tensor[int]
     tgt_array, tgt_valid_len = build_array_fra(target, tokenizer, num_steps)
@@ -96,17 +96,18 @@ def load_data_fra(data_path:str,model_path:str,batch_size, num_steps, num_exampl
     data_iter = load_array(data_arrays, batch_size)
     return data_iter, tokenizer #each data_iter has shape of ((batch_size,num_steps),(batch_size)) * 2
 
-
-# model_path="/home/pengweixuan/Documents/mylearning/Mytransformer/non_code_files/tokenizer.model"
-# raw_text=read_data_fra()
+# """TEST"""
+# tokenizer_path= "/home/pengweixuan/Documents/mylearning/Mytransformer/non_code_files/tokenizer.model"
+# data_path="../non_code_files/fra.txt"
+# raw_text=read_data_fra(data_path)
 # text1 = preprocess_fra(raw_text)
 # print(text1[:80])
-# source, target = tokenize_fra(text1)
+# source, target = split_line(text1)
 # print(source[1000:1006], target[1000:1006])
-# t=Tokenizer(model_path)
-# a=truncate_pad(t.encode(source[0]),10,t.encode("<|pad|>"))
+# t=Tokenizer(tokenizer_path)
+# a=truncate_pad(t.encode(source[0]),10,t.pad_id)
 # print(a)
-# train_iter, tokenizer = load_data_fra(model_path,batch_size=2, num_steps=8)
+# train_iter, tokenizer = load_data_fra(data_path,tokenizer_path, batch_size=2, num_steps=8)
 # for batch in train_iter:
 #     X, X_valid_len, Y, Y_valid_len = [x for x in batch]
 #     print( X.type(torch.int32))
@@ -114,3 +115,12 @@ def load_data_fra(data_path:str,model_path:str,batch_size, num_steps, num_exampl
 #     print( Y.type(torch.int32))
 #     print( Y_valid_len)
 #     break
+# from collections import Counter
+# a=t.encode(text1)
+# counter = Counter(a)
+# c=counter.most_common()
+# a=[]
+# for i in c:
+#     a.append(i)
+#     if i[1]<1000:
+#         break
