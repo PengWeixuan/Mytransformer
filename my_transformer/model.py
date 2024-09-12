@@ -2,12 +2,11 @@ import math
 from dataclasses import dataclass
 
 import torch
-from torch import nn
 import torch.nn.functional as F
+from torch import nn
 
-from my_transformer.tokenizer import Tokenizer
-from my_transformer.train_predict import predict
 from my_transformer.utils import masked_softmax
+
 
 @dataclass
 class ModelArgs:
@@ -15,7 +14,7 @@ class ModelArgs:
     enc_layers: int = 2
     dec_layers: int = 2
     n_heads: int = 4
-    vocab_size: int = 128003
+    vocab_size: int = -1
     dropout:float=0.1
     ffn_dim_multiplier=2
     bias:bool=True
@@ -168,29 +167,10 @@ class Decoder(nn.Module):
         return self.output(h)
 
 class Transformer(nn.Module):
-    def __init__(self, paras:ModelArgs):
+    def __init__(self, paras_enc:ModelArgs,paras_dec:ModelArgs):
         super(Transformer, self).__init__()
-        self.encoder=Encoder(paras)
-        self.decoder=Decoder(paras)
+        self.encoder=Encoder(paras_enc)
+        self.decoder=Decoder(paras_dec)
     def forward(self,enc_X,dec_X,enc_valid_len):
         enc_out=self.encoder(enc_X,enc_valid_len)
         return self.decoder(dec_X,enc_out,enc_valid_len)
-
-# if __name__=="__main__":
-#     # test
-#     model_path="C:\\Users\\39936\\Downloads\\tokenizer.model"
-#     tokenizer = Tokenizer(model_path)
-#
-#     args: ModelArgs=ModelArgs(vocab_size=tokenizer.n_words)
-#
-#     bsz,seqlen=2,10
-#     enc_validlen=torch.tensor([3,2])
-#     net=Transformer(args)
-#     net.eval()
-#     enc_X=torch.ones((bsz,seqlen), dtype=torch.long)
-#     dec_X=torch.ones((bsz,3), dtype=torch.long)
-#     a=net(enc_X,dec_X,enc_validlen)
-#     print(a.shape)
-#
-#     b=predict(net,"Hello world.",tokenizer,10,enc_X.device)
-#     print(b)
