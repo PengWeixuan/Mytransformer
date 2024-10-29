@@ -15,7 +15,7 @@ class ModelArgs:
     enc_layers: int = 2
     dec_layers: int = 2
     n_heads: int = 4
-    vocab_size: int = 128003
+    vocab_size: int = 10000
     dropout:float=0.1
     ffn_dim_multiplier=2
     bias:bool=True
