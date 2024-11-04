@@ -11,7 +11,7 @@ def translate(English:list[str], tokenizer_path:str):
     tokenizer = Tokenizer(tokenizer_path)
     args = ModelArgs(vocab_size=tokenizer.n_words,dropout=0.0)
     net = Transformer(args)
-    net.load_state_dict(torch.load('./non_code_files/my_transformer.pth',weights_only=True), strict=True)
+    net.load_state_dict(torch.load('./non_code_files/my_transformer_4.pth',weights_only=True), strict=True)
     net.to(device)
 
     French=[]

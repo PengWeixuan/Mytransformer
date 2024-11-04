@@ -19,6 +19,7 @@ class ModelArgs:
     dropout:float=0.1
     ffn_dim_multiplier=2
     bias:bool=True
+    max_seq_len: int = 30
 
 def positionalEncoding(X:torch.Tensor,num_hiddens,dropout):
     # X.shape==[batch_size,seqlen,num_hiddens]
@@ -52,7 +53,11 @@ class Attention(nn.Module):
         self.wo = nn.Linear(self.n_heads * self.head_dim, args.num_hiddens, bias=args.bias)
         self.dropout=nn.Dropout(args.dropout)
 
-    def forward(self, xq:torch.Tensor,xk:torch.Tensor,xv:torch.Tensor, valid_lens):
+        max_batch_size = 1
+        self.cache_k = torch.zeros((max_batch_size, args.max_seq_len, self.n_heads, self.head_dim))
+        self.cache_v = torch.zeros((max_batch_size, args.max_seq_len, self.n_heads, self.head_dim))
+
+    def forward(self, xq:torch.Tensor,xk:torch.Tensor,xv:torch.Tensor, valid_lens,start_pos:int=0):
         #xk,xv.shape==[batchsize,seqlen,num_hidden]
         #valid_lens.shape==[batchsize]
 
@@ -62,6 +67,14 @@ class Attention(nn.Module):
         xq = xq.reshape(xq.shape[0], xq.shape[1], self.n_heads, self.head_dim)
         xk = xk.reshape(xk.shape[0], xk.shape[1], self.n_heads, self.head_dim)
         xv = xv.reshape(xv.shape[0], xv.shape[1], self.n_heads, self.head_dim)
+
+        if not self.training:
+            self.cache_k = self.cache_k.to(xq)
+            self.cache_v = self.cache_v.to(xq)
+            self.cache_k[:, start_pos: start_pos + xk.shape[1]] = xk
+            self.cache_v[:, start_pos: start_pos + xv.shape[1]] = xv
+            xk = self.cache_k[:, : start_pos + xk.shape[1]]
+            xv = self.cache_v[:, : start_pos + xv.shape[1]]
 
         #shape [batchsize,n_heads,seqlen,num_hidden/n_heads]
         #put "batchisize" dim and "n_heads" dim together to take full utilize of parallism
@@ -132,7 +145,7 @@ class DecoderBlock(nn.Module):
         self.addnorm2 = AddNorm(args)
         self.ffn=FeedForward(args)
         self.addnorm3 = AddNorm(args)
-    def forward(self,x:torch.Tensor,enc_kv,enc_valid_len):
+    def forward(self,x:torch.Tensor,enc_kv,enc_valid_len,start_pos:int=0):
 
         if self.training:
             batch_size, seqlen, _ = x.shape
@@ -141,7 +154,7 @@ class DecoderBlock(nn.Module):
         else:
             dec_valid_lens = None
 
-        h=self.addnorm1(x, self.masked_attention(x,x,x,dec_valid_lens))
+        h=self.addnorm1(x, self.masked_attention(x,x,x,dec_valid_lens,start_pos))
         h=self.addnorm2(h, self.attention(x,enc_kv,enc_kv,enc_valid_len))
         h=self.addnorm3(h,self.ffn(h))
         return h
@@ -160,11 +173,11 @@ class Decoder(nn.Module):
 
         self.output=nn.Linear(paras.num_hiddens,paras.vocab_size,bias=paras.bias)
 
-    def forward(self,x:torch.Tensor,enc_out:torch.Tensor,enc_valid_len):
+    def forward(self,x:torch.Tensor,enc_out:torch.Tensor,enc_valid_len,start_pos:int=0):
         h = positionalEncoding(self.embedding(x) * math.sqrt(self.num_hiddens), self.num_hiddens, self.dropout)
 
         for layer in self.layers:
-            h = layer(h, enc_out, enc_valid_len)
+            h = layer(h, enc_out, enc_valid_len,start_pos)
         return self.output(h)
 
 class Transformer(nn.Module):

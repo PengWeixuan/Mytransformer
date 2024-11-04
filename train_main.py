@@ -9,8 +9,8 @@ def trainMyTransformer(data_path:str,tokenizer_path:str):
     device = torch.device(f'cuda:0')
 
     batch_size = 64
-    lr = 0.005
-    num_epochs = 200
+    lr = 0.001
+    num_epochs = 100
     # The English-French pairs in the first "num_examples" lines of fra.txt
     # file are used as training samples. Each sentence is no longer than
     # "max_seq_len" tokens.
@@ -23,10 +23,10 @@ def trainMyTransformer(data_path:str,tokenizer_path:str):
 
     net=Transformer(args)
     # Uncomment this if you want train model based
-    #net.load_state_dict(torch.load('./non_code_files/my_transformer.pth', weights_only=True), strict=True)
+    net.load_state_dict(torch.load('./non_code_files/my_transformer_4.pth', weights_only=True), strict=True)
 
     train(net,train_iter,lr,num_epochs,tokenizer,device)
-    torch.save(net.state_dict(), './non_code_files/my_transformer.pth')
+    torch.save(net.state_dict(), './non_code_files/my_transformer_5.pth')
     print("Weights saved.")
 
 if __name__=="__main__":

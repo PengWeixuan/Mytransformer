@@ -71,8 +71,8 @@ def predict(net, src_sentence:str,tokenizer:Tokenizer, num_steps,device):
     dec_X = torch.unsqueeze(torch.tensor(
         [tokenizer.bos_id], dtype=torch.long, device=device), dim=0)
     output_seq = []
-    for _ in range(num_steps):
-        Y = net.decoder(dec_X, enc_out,enc_valid_len)
+    for start_pos in range(num_steps):
+        Y = net.decoder(dec_X, enc_out,enc_valid_len,start_pos)
         dec_X = Y.argmax(dim=2)
         pred = dec_X.squeeze(dim=0).type(torch.int32).item()
 
