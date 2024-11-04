@@ -70,8 +70,8 @@ def predict(net, src_sentence, src_vocab, tgt_vocab, num_steps, device):
     dec_X = torch.unsqueeze(torch.tensor(
         [tgt_vocab['<bos>']], dtype=torch.long, device=device), dim=0)
     output_seq = []
-    for _ in range(num_steps):
-        Y = net.decoder(dec_X, enc_out,enc_valid_len)
+    for start_pos in range(num_steps):
+        Y = net.decoder(dec_X, enc_out,enc_valid_len,start_pos)
         # We use the token with the highest prediction likelihood as the input
         # of the decoder at the next time step
         dec_X = Y.argmax(dim=2)

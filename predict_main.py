@@ -17,7 +17,7 @@ def translate(english:list[str],data_path:str):
     args_dec = ModelArgs(vocab_size=len(tgt_vocab),dropout=0.0)
 
     net = Transformer(args_enc, args_dec)
-    net.load_state_dict(torch.load('./non_code_files/my_transformer.pth',weights_only=True), strict=True)
+    net.load_state_dict(torch.load('./non_code_files/my_transformer3.pth',weights_only=True), strict=True)
     net.to(device)
 
     french=[]
