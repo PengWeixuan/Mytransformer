@@ -13,7 +13,8 @@ The training script is in predict_main.py. The model and vocabulary parameters n
 
 ## Remark
 This version of the vocabulary treats each word as a token. The vocabulary size is about 200, while that of llama3's tokenizer is 128,000. This time, the results are as good as those in "dive into deep learning", which means that my model code is correct.<br>
-I did not implement kv-cache. kv-cache is a technic that speeds up inference and is not used during training. The implementation in "Dive into deep learning" is wrong, which doesn't reduce any computation.
+I did not implement kv-cache. kv-cache is a technic that speeds up inference and is not used during training. The implementation in "Dive into deep learning" is wrong, which doesn't reduce any computation.  
+kv-cache is implemented.
 
 ## References
 https://github.com/meta-llama/llama3<br>
